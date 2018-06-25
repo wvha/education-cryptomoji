@@ -3,6 +3,11 @@
 const secp256k1 = require('secp256k1');
 const { randomBytes, createHash } = require('crypto');
 
+// returns SHA-256 HASH 
+const sha256 = msg => createHash('sha256').update(msg).digest();
+
+// converts hex string to buffer
+const toBytes = hex => Buffer.from(hex, 'hex');
 
 /**
  * A function which generates a new random Secp256k1 private key, returning
@@ -57,10 +62,15 @@ const getPublicKey = privateKey => {
  * Hint:
  *   Remember that you need to sign a SHA-256 hash of the message,
  *   not the message itself!
+ * 
+ * My notes:
+ * use secp256 native sign function but input must be ..
+ * sha256 hashed message, and toBytes privateKey.
+ * signature return must be in hex format
  */
 const sign = (privateKey, message) => {
-  // Your code here
-
+  const { signature } = secp256k1.sign(sha256(message), toBytes(privateKey));
+  return signature.toString('hex');
 };
 
 /**
@@ -72,10 +82,14 @@ const sign = (privateKey, message) => {
  *   // true
  *   console.log( verify(publicKey, 'Hello World?', signature) );
  *   // false
+ * 
+ * My Notes:
+ * message - sha256
+ * signature - toBytes
+ * publicKey - toBytes
  */
 const verify = (publicKey, message, signature) => {
-  // Your code here
-
+  return secp256k1.verify(sha256(message), toBytes(signature), toBytes(publicKey));
 };
 
 module.exports = {
