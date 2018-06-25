@@ -12,10 +12,16 @@ const { randomBytes, createHash } = require('crypto');
  *   const privateKey = createPrivateKey();
  *   console.log(privateKey);
  *   // 'e291df3eede7f0c520fddbe5e9e53434ff7ef3c0894ed9d9cbcb6596f1cfe87e'
+ * My notes:
+ *  this is from the API
+ * make sure to use .toString('hex')
  */
 const createPrivateKey = () => {
-  // Enter your solution here
-
+  let privateKey
+  do {
+    privateKey = randomBytes(32)
+  } while (!secp256k1.privateKeyVerify(privateKey));
+  return privateKey.toString('hex');
 };
 
 /**
@@ -30,10 +36,13 @@ const createPrivateKey = () => {
  * Hint:
  *   Remember that the secp256k1-node library expects raw bytes (i.e Buffers),
  *   not hex strings! You'll have to convert the private key.
+ * 
+ * My notes:
+ *  the use secp256k1 to create a public key from privateKey(in bytes form)
+ * and turn that all back to hex
  */
 const getPublicKey = privateKey => {
-  // Your code here
-
+  return secp256k1.publicKeyCreate(toBytes(privateKey)).toString('hex');
 };
 
 /**
