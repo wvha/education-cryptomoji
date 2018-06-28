@@ -11,8 +11,11 @@ const signing = require('./signing');
  *   - have been modified since signing
  */
 const isValidTransaction = transaction => {
-  // Enter your solution here
-
+  if (transaction.amount < 0) {
+    return false;
+  }
+  const sum = transaction.source + transaction.recipient + transaction.amount;
+  return signing.verify(transaction.source, sum, transaction.signature);
 };
 
 /**
@@ -20,10 +23,22 @@ const isValidTransaction = transaction => {
  * It should reject blocks if:
  *   - their hash or any other properties were altered
  *   - they contain any invalid transactions
+ * 
+ * My notes:
+ *  this is similar to calculateHash from block
+ *  if the current block hash isnt the same as the previous block hash
+ *    then its been compromised
+ *  also we check the block if every transaction is valid
  */
 const isValidBlock = block => {
-  // Your code here
+  const transactionString = block.transactions.map(t => t.signature).join('');
+  const sumHash = block.previousHash + transactionString + block.nonce;
 
+  if (block.hash !== createHash('sha512').update(sumHash).digest('hex')) {
+    return false;
+  }
+
+  return block.transactions.every(isValidTransaction);
 };
 
 /**
@@ -35,10 +50,33 @@ const isValidBlock = block => {
  *     the previous hash
  *   - contains any invalid blocks
  *   - contains any invalid transactions
+ * 
+ * My notes:
+ *  this function tests at the blockchain level as a whole.
+ *    - contains genesis block
+ *    - if any block's hash doesn't match its previous hash
+ *    - checks each block if its a valid block
+ *    - checks each transaction in block
  */
 const isValidChain = blockchain => {
-  // Your code here
+  const { blocks } = blockchain;
 
+  if (blocks[0].previousHash !== null) {
+    return false;
+  }
+
+  if (blocks.slice(1).some((b, i) => b.previousHash !== blocks[i].hash)) {
+    return false;
+  }
+
+  if (blocks.some(b => !isValidBlock(b))) {
+    return false;
+  }
+
+  return blocks
+    .map(b => b.transactions)
+    .reduce((flat, transactions) => flat.concat(transactions), [])
+    .every(isValidTransaction);
 };
 
 /**
@@ -47,7 +85,7 @@ const isValidChain = blockchain => {
  * (in theory) make the blockchain fail later validation checks;
  */
 const breakChain = blockchain => {
-  // Your code here
+  blockchain.blocks[1].transactions[0].amount = 999999999;
 
 };
 
