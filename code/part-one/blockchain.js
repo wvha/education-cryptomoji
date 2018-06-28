@@ -26,7 +26,7 @@ class Transaction {
     this.recipient = recipient;
     this.amount = amount;
 
-    const sum = this.source + recipient + amount;
+    let sum = this.source + recipient + amount;
     this.signature = signing.sign(privateKey, sum);
   }
 }
@@ -48,8 +48,9 @@ class Block {
    *   - hash: a unique hash string generated from the other properties
    */
   constructor(transactions, previousHash) {
-    // Your code here
-
+    this.transactions = transactions;
+    this.previousHash = previousHash;
+    this.calculateHash(17);
   }
 
   /**
@@ -62,8 +63,12 @@ class Block {
    *   properties change.
    */
   calculateHash(nonce) {
-    // Your code here
+    this.nonce = nonce;
+    // const transactionString = this.transactions.map(t => t.signature).join('');
+    const transactionString = this.transactions.map(t => t.signature).join('');
+    const sum = this.previousHash + transactionString + nonce;
 
+    this.hash = createHash('sha512').update(sum).digest('hex');
   }
 }
 
@@ -82,16 +87,15 @@ class Blockchain {
    *   - blocks: an array of blocks, starting with one genesis block
    */
   constructor() {
-    // Your code here
-
+    const genesis = new Block([], null);
+    this.blocks = [ genesis ];
   }
 
   /**
    * Simply returns the last block added to the chain.
    */
   getHeadBlock() {
-    // Your code here
-
+    return this.blocks[this.blocks.length-1];
   }
 
   /**
@@ -99,8 +103,8 @@ class Blockchain {
    * adding it to the chain.
    */
   addBlock(transactions) {
-    // Your code here
-
+    const block = new Block(transactions, this.getHeadBlock().hash);
+    this.blocks.push(block);
   }
 
   /**
@@ -111,10 +115,23 @@ class Blockchain {
    *   There is currently no way to create new funds on the chain, so some
    *   keys will have a negative balance. That's okay, we'll address it when
    *   we make the blockchain mineable later.
+   * 
+   * My Notes:
+   * 
    */
   getBalance(publicKey) {
-    // Your code here
-
+    // find balance/sum of all amounts in all transactions stored in chain
+    return this.blocks.reduce((balance, block) => {
+      return balance + block.transactions.reduce((sum, transaction) => {
+        if (transaction.recipient === publicKey) {
+          return sum + transaction.amount;
+        }
+        if (transaction.source === publicKey) {
+          return sum - transaction.amount;
+        }
+        return sum;
+      }, 0);
+    }, 0);
   }
 }
 
